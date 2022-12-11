@@ -84,6 +84,8 @@ const connectToWhatsApp = async () => {
     bot.on('message-receipt.update', async () => {});
     bot.on('group-participants.update', async () => {});
 
+    // Handle Request from API
+    await require('./Handle/API')(shelterSock)
 
     // Check if Got New Messages
     bot.on('messages.upsert', async res => {
@@ -95,4 +97,3 @@ const connectToWhatsApp = async () => {
 
 connectToWhatsApp().then(_ => {});
 
-require('./handle')(shelterSock)

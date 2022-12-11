@@ -5,14 +5,18 @@ app.listen(port, () => {
     console.log(`its Running on http://localhost:${port}`);
 })
 
-module.exports = async (ShelterSock) => {
+module.exports = async (shelterSock) => {
     try{
-        app.get('/send', async (req, res) => {
-            const toNumber = "6282273726295@@s.whatsapp.net"
-            // const sendMsg = await shelterSock.sendMessage(toNumber, {
-            //     text: "Hay Dari API"
-            // })
-            res.send('hay')
+        app.get('/sendMessage', async (req, res) => {
+            let request = {
+                chatID: req.query.chatID,
+                message: req.query.message
+            }
+            let chatID = request.chatID + "@s.whatsapp.net";
+            const sendMsg = await shelterSock.sendMessage(chatID, {
+                text: request.message
+            })
+            res.send(sendMsg)
         })
     }catch(e){
         console.log(e);
