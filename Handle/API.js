@@ -2,7 +2,7 @@ const app = require('express')();
 const port = 4000;
 
 app.listen(port, () => {
-    console.log(`its Running on http://localhost:${port}`);
+    console.log(`WEB API is Running on http://localhost:${port}`);
 })
 
 module.exports = async (shelterSock) => {
