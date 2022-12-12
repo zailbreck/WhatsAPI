@@ -5,17 +5,16 @@ const {
     makeInMemoryStore,
     useMultiFileAuthState, fetchLatestBaileysVersion,
 } = require("@adiwajshing/baileys");
-
 const pino = require('pino')
-const MAIN_LOGGER = pino({timestamp: () => `,"time":"${new Date().toJSON()}"`})
-const clogger = MAIN_LOGGER.child({ })
-clogger.level = 'trace'
+const { autoMod, serialize, botLogger, botLoggerChild } = require('./config')
+
+
 
 const useStore = !process.argv.includes("--no-store");
-
+const logg = require('pino')
 // Store WA Connection into Memory
 const store = useStore ? makeInMemoryStore({
-    logger: clogger
+    logger: botLogger()
 }) : undefined
 store?.readFromFile("./multi_session.json")
 // Save Every 10s
@@ -39,7 +38,7 @@ const connectToWhatsApp = async () => {
 
     shelterSock = makeWASocket({
         version,
-        logger: clogger,
+        logger: botLogger(),
         printQRInTerminal: true,
         auth: state,
         browser: ["ShelterID", "Chrome", "88.0.4324.182"],
@@ -49,6 +48,11 @@ const connectToWhatsApp = async () => {
             };
         },
     })
+
+    // AutoLoad Handle When Modified
+    autoMod('./Handle/API', _ => console.log("API has been Updated"))
+    autoMod('./Handle/BOT', _ => console.log("BOT has been Updated"))
+
     landingPage()
     store?.bind(shelterSock.ev)
     bot = shelterSock.ev
@@ -84,16 +88,17 @@ const connectToWhatsApp = async () => {
     bot.on('message-receipt.update', async () => {});
     bot.on('group-participants.update', async () => {});
 
+    // Custom Handle
     // Handle Request from API
     await require('./Handle/API')(shelterSock)
 
     // Check if Got New Messages
     bot.on('messages.upsert', async res => {
-        console.log("hay")
+        console.log("Message Result == ", msg)
     });
 
     return shelterSock;
 }
 
-connectToWhatsApp().then(_ => {});
+connectToWhatsApp().then(_ => console.log("WhatsAPI is Running ..."));
 
