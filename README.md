@@ -16,7 +16,7 @@ Run app
 npm start
 ```
 
-## Usage
+# API Usage
 Qrcode will display in terminal after "npm start", in your whatsapp app on android/ios will set to sender.
 
 ## Send message to spesific number whatsapp
@@ -36,6 +36,45 @@ Example
 ```
 http://localhost:port/sendMessageGroup?groupID=621234567890&message=Hello World
 ```
+
+# Bot Usage
+
+# Create Custom Handler
+1. First Create New File Handler inside Folder Handle with .js Extension
+2. Open New File Handler and add
+```
+module.exports = async (shelterSock) => {
+    try{
+        // Your Code in Here
+    }catch(e){
+        console.log(e);
+    }
+};
+```
+3. Next Open index.js and Add the following text below (Custom Handle)
+```
+await require('./Handle/{customHandleName}')(shelterSock)
+```
+4. Save and Restart
+
+## or You Want Custom Passing Data
+1. First Open or Create New File Handler inside Folder Handle with .js Extension
+```
+module.exports = async (shelterSock, dataOrFunction) => {
+    try{
+        dataOrFunction.someFunction({});
+        // or 
+        const newData = dataOrFunction;
+    }catch(e){
+        console.log(e);
+    }
+};
+```
+2. Next Open index.js and Add the following text below (Custom Handle)
+```
+await require('./Handle/{customHandleName}')(shelterSock, dataOrFunction)
+```
+3. Save and Restart
 
 ## With pm2
 [BUG] automatic restart app every 1 hour
