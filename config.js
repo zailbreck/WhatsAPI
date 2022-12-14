@@ -1,6 +1,13 @@
 const fs = require('fs')
 const pino = require('pino')
 
+
+exports.simpleSendMessage = (socket, from, message) => {
+    socket.sendMessage(from, {
+        text: message
+    })
+}
+
 exports.botLogger = () => {
     return pino({
             level: "silent",

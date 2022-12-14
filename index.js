@@ -90,11 +90,18 @@ const connectToWhatsApp = async () => {
 
     // Custom Handle
     // Handle Request from API
-    await require('./Handle/API')(shelterSock)
+    await require('./Handle/API')(shelterSock, bot)
 
     // Check if Got New Messages
     bot.on('messages.upsert', async res => {
-        console.log("Message Result == ", msg)
+        if (!res.messages) return
+        let msg = res.messages[0];
+        msg = serialize(shelterSock, msg)
+        msg.isBaileys = msg.key.id.startsWith('BAE5') || msg.key.id.startsWith('3EB0')
+        // const from = msg.key.remoteJid
+
+        // Call Message Handler & Passing Data
+        await require('./Handle/BOT')(shelterSock, bot, msg, res, store)
     });
 
     return shelterSock;
