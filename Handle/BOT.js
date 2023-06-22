@@ -1,6 +1,11 @@
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { simpleSendMessage } = require('../config')
+const fs = require('fs')
+const XLSX = require('xlsx');
 module.exports = async (shelterSock, bot, msg, res, store) => {
     try{
+        let stream = undefined
+        let buffer = Buffer.from([])
         const { type, quotedMsg, mentioned, now, fromMe} = msg
         if(msg.isBaileys) return
 
@@ -39,6 +44,53 @@ module.exports = async (shelterSock, bot, msg, res, store) => {
         switch (command) {
             case ".hello":
                 simpleSendMessage(shelterSock, from, "Hai")
+                break
+            
+            case (".bc" || ".broadcast"):
+                // console.log(msg);
+                if (isQuotedDocument) {
+                    let _title = msg.message.extendedTextMessage?.contextInfo.quotedMessage.documentMessage.title;
+                    // let _type = msg.message.extendedTextMessage?.contextInfo.quotedMessage.documentMessage.mimetype;
+                    stream = await downloadContentFromMessage(msg.message.extendedTextMessage?.contextInfo.quotedMessage.documentMessage, 'document');
+
+                    // Create Buffer from Stream Data
+                    buffer = Buffer.from([])
+                    for await (const chunk of stream) {
+                        buffer = Buffer.concat([buffer, chunk])
+                    }
+                    // if (_type != 'application/pdf')
+                    fs.writeFileSync(`./temp/${_title}`, buffer)
+
+                    // Read Excel 
+                    const workbook = XLSX.readFile(`./temp/${_title}`);
+
+                    // Pilih sheet yang ingin dibaca
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+
+                    // Mendapatkan data dari kolom 'Nama' dan 'Nomor'
+                    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    const _nama = data[0].indexOf('Nama');
+                    const _receiver = data[0].indexOf('Nomor');
+                    const _message = data[0].indexOf('Message');
+
+
+                    for (let i = 1; i < data.length; i++) {
+                        // console.log(`Nama = ${data[i][_nama]} | Nomor = ${data[i][_receiver]} | pesan = ${data[i][_message].replace('{Nama}',data[i][_nama])}`)
+
+                        simpleSendMessage(shelterSock, `${data[i][_receiver]}@s.whatsapp.net`, `${data[i][_message].replace('{Nama}', data[i][_nama])}`)
+                    }
+
+                    fs.unlink(filePath, (err) => {
+                        if (err) {
+                          console.error('Gagal menghapus file:', err);
+                          return;
+                        }
+                      
+                        console.log('File berhasil dihapus');
+                      });
+                }
                 break
         }
 
