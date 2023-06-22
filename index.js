@@ -4,7 +4,7 @@ const {
     DisconnectReason,
     makeInMemoryStore,
     useMultiFileAuthState, fetchLatestBaileysVersion,
-} = require("@adiwajshing/baileys");
+} = require("@whiskeysockets/baileys");
 const pino = require('pino')
 const { autoMod, serialize, botLogger, botLoggerChild } = require('./config')
 
