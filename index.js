@@ -3,15 +3,25 @@ const {
     default: makeWASocket,
     DisconnectReason,
     makeInMemoryStore,
-    useMultiFileAuthState, fetchLatestBaileysVersion,
+    useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore,
 } = require("@whiskeysockets/baileys");
-const pino = require('pino')
 const { autoMod, serialize, botLogger, botLoggerChild } = require('./config')
+const fs = require('fs')
+
+// Force Logger Level
+botLogger().level = 'trace'
+
+// Cache biar cepet
+const NodeCache = require('node-cache')
+const e = require("express");
+const msgRetryCounterCache = new NodeCache();
+
+// Extra Parameter (Untuk Handle jika ada)
+const useStore = !process.argv.includes('--no-store')
+const doReplies = !process.argv.includes('--no-reply')
+const useMobile = process.argv.includes('--mobile')
 
 
-
-const useStore = !process.argv.includes("--no-store");
-const logg = require('pino')
 // Store WA Connection into Memory
 const store = useStore ? makeInMemoryStore({
     logger: botLogger()
@@ -23,7 +33,7 @@ setInterval(() => {
 }, 10_000)
 
 function landingPage(){
-    console.clear()
+    // console.clear()
     console.log('Checking Session ...')
 }
 
@@ -40,7 +50,16 @@ const connectToWhatsApp = async () => {
         version,
         logger: botLogger(),
         printQRInTerminal: true,
-        auth: state,
+        // auth: state,
+        mobile: useMobile,
+        auth: {
+          creds: state.creds,
+            /** caching makes the store faster to send/recv messages */
+          keys: makeCacheableSignalKeyStore(state.keys, botLogger()),
+        },
+        msgRetryCounterCache,
+        generateHighQualityLinkPreview: true,
+        // Change User Agent Here
         browser: ["ShelterID", "Chrome", "88.0.4324.182"],
         getMessage: async (key) => {
             return {
@@ -57,15 +76,26 @@ const connectToWhatsApp = async () => {
     store?.bind(shelterSock.ev)
     bot = shelterSock.ev
 
+
+    // New Login Update via Mobile Number
+    // if (useMobile)
+
     // Check Current Sessions
     bot.on('connection.update', (update) => {
+
         const { connection, lastDisconnect } = update
         if(connection === 'close') {
             console.log('Connection Close')
-            if (lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut) {
+            // Reconnect jika di kick
+            if (lastDisconnect?.error.output?.statusCode !== DisconnectReason.loggedOut) {
                 connectToWhatsApp()
             }else {
                 console.log("Connection closed. You are logged out.");
+                // Force Delete Session and Intterup
+                console.log("Clean Expired Session!")
+                fs.rmSync("baileys_auth_info", { recursive: true, force: true });
+                fs.unlink("./multi_session.json", (err) => { console.log("Error") });
+                process.exit(1);
             }
         }else if (connection === 'open'){
             console.log("Connection Open")
@@ -103,7 +133,6 @@ const connectToWhatsApp = async () => {
         // Call Message Handler & Passing Data
         await require('./Handle/BOT')(shelterSock, bot, msg, res, store)
     });
-
     return shelterSock;
 }
 
