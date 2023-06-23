@@ -10,6 +10,7 @@ exports.simpleSendMessage = (socket, from, message) => {
 
 exports.botLogger = () => {
     return pino({
+            // Secara Default tidak melog apapun
             level: "silent",
             stream: 'ShelterStream',
             timestamp: () => `,"time":"${new Date().toJSON()}"`
